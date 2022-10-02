@@ -1,13 +1,17 @@
 import json
+import os 
 from flask import request, _request_ctx_stack
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
+from dotenv import load_dotenv
+load_dotenv()
 
 
-AUTH0_DOMAIN = 'udacity-fsnd.auth0.com'
-ALGORITHMS = ['RS256']
-API_AUDIENCE = 'dev'
+
+AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
+ALGORITHMS = os.getenv("ALGORITHMS")
+API_AUDIENCE = os.getenv("API_AUDIENCE")
 
 ## AuthError Exception
 
@@ -53,7 +57,7 @@ def get_token_auth_header():
 #check permission
 # checks if permission is present in payload provided and raises error if there's no permission in the payload
 def check_permissions(permission, payload):
-    if 'permission' not in payload:
+    if 'permissions' not in payload:
         raise AuthError({
             "code":"unauthorized",
             "description": "Permission not included in payload"
@@ -76,7 +80,6 @@ def verify_decode_jwt(token):
     jwks = json.loads(jsonurl.read())
     
     unverified_header = jwt.get_unverified_header(token)
-    
     rsa_key ={}
     
     if "kid" not in unverified_header:
@@ -86,7 +89,7 @@ def verify_decode_jwt(token):
         },401)
     
     for key in jwks["keys"]:
-        if key["id"]==unverified_header["kid"]:
+        if key["kid"]==unverified_header["kid"]:
             rsa_key = {
                 "kty":key["kty"],
                 "kid":key["kid"],
@@ -135,7 +138,6 @@ def verify_decode_jwt(token):
 
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
-        
         @wraps(f)
         def wrapper(*args, **kwargs):
             token = get_token_auth_header()

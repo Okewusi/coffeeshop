@@ -39,14 +39,17 @@ def get_drinks():
 @app.route('/drinks-detail')
 @requires_auth('get:drinks-details')
 def get_drinks_details(payload):
-    drinks = Drink.query.all()
+    try:
+        drinks = Drink.query.all()
 
-    formatted_drinks = [drink.long() for drink in drinks]
+        formatted_drinks = [drink.long() for drink in drinks]
 
-    return jsonify({
-        "success": True,
-        "drinks": formatted_drinks
-    })
+        return jsonify({
+            "success": True,
+            "drinks": formatted_drinks
+        })
+    except:
+        abort(402)
 
 #create drink
 #requires 'post:drinks' permission which is available to manager only
@@ -56,12 +59,12 @@ def get_drinks_details(payload):
 @requires_auth('post:drinks')
 def create_drink(payload):
     body = request.get_json()
+    print(body)
 
     try:
         title = body["title"]
-        recipe = body["recipe"]
-
-        drink = Drink(title=title,recipe=recipe)
+        recipe_json = json.dumps(body["recipe"])
+        drink = Drink(title=title,recipe=recipe_json)
         drink.insert()
 
         return jsonify({
